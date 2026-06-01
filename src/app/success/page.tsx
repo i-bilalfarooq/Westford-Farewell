@@ -45,9 +45,11 @@ export default async function SuccessPage({
                 const { Resend } = await import('resend');
                 const resend = new Resend(process.env.RESEND_API_KEY);
                 
-                const qrUrl = await QRCode.toDataURL(ticket.id, {
-                  width: 300, margin: 2, color: { dark: '#000000', light: '#ffffff' }
-                });
+                // Get Base URL
+                const host = (await searchParams).host || 'westford-farewell.vercel.app'; // Fallback if headers not easily accessible in page component
+                const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+                const baseUrl = `${protocol}://${host}`;
+                const qrCodeImageUrl = `${baseUrl}/api/qr?ticket_id=${ticket.id}`;
 
                 await resend.emails.send({
                   from: 'onboarding@resend.dev',
@@ -60,7 +62,7 @@ export default async function SuccessPage({
                       <p style="font-size: 16px;">Your payment was successful! Here is your ticket.</p>
                       <p style="font-size: 14px; color: #666;">Please present this QR code at the entrance.</p>
                       <div style="margin: 30px 0; padding: 20px; border: 2px dashed #ccc; border-radius: 10px; display: inline-block;">
-                        <img src="${qrUrl}" alt="Ticket QR Code" style="width: 250px; height: 250px;" />
+                        <img src="${qrCodeImageUrl}" alt="Ticket QR Code" style="width: 250px; height: 250px;" />
                       </div>
                       <p style="font-size: 12px; color: #999;">Ticket ID: ${ticket.id}</p>
                     </div>

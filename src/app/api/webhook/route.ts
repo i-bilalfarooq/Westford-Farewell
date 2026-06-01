@@ -50,16 +50,12 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Ticket not found or update failed' }, { status: 500 });
         }
 
-        // 2. Generate QR Code
+        // 2. Generate Base URL for QR Image
+        const host = request.headers.get('host');
+        const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+        const baseUrl = `${protocol}://${host}`;
         const ticketId = ticketData.id;
-        const qrCodeDataUrl = await QRCode.toDataURL(ticketId, {
-          width: 300,
-          margin: 2,
-          color: {
-            dark: '#000000',
-            light: '#ffffff'
-          }
-        });
+        const qrCodeImageUrl = `${baseUrl}/api/qr?ticket_id=${ticketId}`;
 
         // 3. Send Email via Resend
         await resend.emails.send({
@@ -74,7 +70,7 @@ export async function POST(request: Request) {
               <p style="font-size: 14px; color: #666;">Please present this QR code at the entrance.</p>
               
               <div style="margin: 30px 0; padding: 20px; border: 2px dashed #ccc; border-radius: 10px; display: inline-block;">
-                <img src="${qrCodeDataUrl}" alt="Ticket QR Code" style="width: 250px; height: 250px;" />
+                <img src="${qrCodeImageUrl}" alt="Ticket QR Code" style="width: 250px; height: 250px;" />
               </div>
               
               <p style="font-size: 12px; color: #999;">Ticket ID: ${ticketId}</p>
