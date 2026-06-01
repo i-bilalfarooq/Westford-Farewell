@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
         // 3. Send Email via Resend
         await resend.emails.send({
-          from: 'Tickets <tickets@yourdomain.com>', // MUST BE VERIFIED IN RESEND
+          from: 'onboarding@resend.dev', // TODO: Change this to your verified domain e.g., 'Tickets <tickets@yourdomain.com>'
           to: ticketData.email,
           subject: 'Your Ticket - University Farewell',
           html: `
