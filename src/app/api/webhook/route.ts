@@ -9,29 +9,30 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request: Request) {
   try {
     const rawBody = await request.text();
-    const signature = request.headers.get('x-hmac-signature');
-    const webhookSecret = process.env.ZIINA_WEBHOOK_SECRET;
-
-    if (!webhookSecret || !signature) {
-      return NextResponse.json({ error: 'Missing signature or secret' }, { status: 400 });
-    }
-
-    // Verify Signature
-    const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(rawBody)
-      .digest('hex');
-
-    if (signature !== expectedSignature) {
-      console.error('Webhook signature mismatch');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    }
-
     const payload = JSON.parse(rawBody);
 
     // Process payment_intent.status.updated
     if (payload.event === 'payment_intent.status.updated') {
-      const intentData = payload.data;
+      const paymentIntentId = payload.data?.id;
+      
+      if (!paymentIntentId) {
+        return NextResponse.json({ error: 'Missing payment intent ID' }, { status: 400 });
+      }
+
+      // Verify directly with Ziina API to prevent spoofing
+      const ziinaApiKey = process.env.ZIINA_API_KEY;
+      const verifyResponse = await fetch(`https://api-v2.ziina.com/api/payment_intent/${paymentIntentId}`, {
+        headers: {
+          'Authorization': `Bearer ${ziinaApiKey}`
+        }
+      });
+
+      if (!verifyResponse.ok) {
+        return NextResponse.json({ error: 'Failed to verify with Ziina' }, { status: 400 });
+      }
+
+      const intentData = await verifyResponse.json();
+
       
       if (intentData.status === 'completed') {
         const paymentIntentId = intentData.id;
