@@ -18,7 +18,7 @@ export default async function SuccessPage({
   if (ticketId) {
     const { data: ticket } = await supabaseAdmin
       .from('tickets')
-      .select('id, name, payment_status, ziina_payment_intent_id')
+      .select('id, name, email, payment_status, ziina_payment_intent_id')
       .eq('id', ticketId)
       .single();
 
