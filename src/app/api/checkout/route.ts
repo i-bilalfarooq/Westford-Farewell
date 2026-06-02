@@ -4,10 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, phone } = body;
+    const { name, email, phone, studentId, courseName, admin } = body;
 
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
+    if (!name || !email || !phone || !studentId || !courseName || !admin) {
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
     // Prepare Ziina Payment Intent Request
@@ -33,11 +33,11 @@ export async function POST(request: Request) {
         'Authorization': `Bearer ${ziinaApiKey}`
       },
       body: JSON.stringify({
-        amount: 4000, // 40.00 AED in base units
+        amount: 3695, // 36.95 AED in base units
         currency_code: 'AED',
         success_url: `${baseUrl}/success?ticket_id=${ticketId}`,
         cancel_url: `${baseUrl}/`,
-        test: true
+        test: false
       })
     });
 
@@ -62,7 +62,10 @@ export async function POST(request: Request) {
         id: ticketId,
         name,
         email,
-        phone: phone || null,
+        phone,
+        student_id: studentId,
+        course_name: courseName,
+        admin,
         ziina_payment_intent_id: paymentIntentId,
         payment_status: 'pending'
       });

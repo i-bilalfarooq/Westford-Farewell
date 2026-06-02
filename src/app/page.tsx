@@ -17,6 +17,9 @@ export default function Home() {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
+      studentId: formData.get('studentId') as string,
+      courseName: formData.get('courseName') as string,
+      admin: formData.get('admin') as string,
     };
 
     try {
@@ -80,19 +83,56 @@ export default function Home() {
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="phone" className={styles.label}>Phone Number (Optional)</label>
+            <label htmlFor="phone" className={styles.label}>Phone Number</label>
             <input 
               type="tel" 
               id="phone" 
               name="phone" 
               className="input-field" 
               placeholder="+971 50 123 4567" 
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="studentId" className={styles.label}>Student ID</label>
+            <input 
+              type="text" 
+              id="studentId" 
+              name="studentId" 
+              className="input-field" 
+              placeholder="Student ID" 
+              required 
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="courseName" className={styles.label}>Course Name</label>
+            <input 
+              type="text" 
+              id="courseName" 
+              name="courseName" 
+              className="input-field" 
+              placeholder="Course Name" 
+              required 
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="admin" className={styles.label}>Admin</label>
+            <input 
+              type="text" 
+              id="admin" 
+              name="admin" 
+              className="input-field" 
+              placeholder="Admin details" 
+              required 
             />
           </div>
 
           <div className={styles.summary}>
-            <span className={styles.summaryLabel}>Total to pay</span>
-            <span className={styles.summaryValue}>AED 40.00</span>
+            <span className={styles.summaryLabel}>Total to pay (35 AED + VAT)</span>
+            <span className={styles.summaryValue}>AED 36.95</span>
           </div>
 
           <button 
