@@ -388,10 +388,18 @@
   }
 
   /* Add Labels */
-  .td:nth-child(1)::before { content: 'Date'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.25rem; }
+  .td:nth-child(1) { flex-direction: row; align-items: center; gap: 0.5rem; }
+  .td:nth-child(1)::before { content: 'Date'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0; }
+  
   .td:nth-child(2)::before { content: 'Attendee'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.25rem; }
+  
   .td:nth-child(3)::before { content: 'Contact'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.25rem; }
-  .td:nth-child(4)::before { content: 'Payment Status'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.25rem; }
-  .td:nth-child(5)::before { content: 'Check-in'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.25rem; }
-  .td:nth-child(6)::before { content: 'Actions'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.25rem; }
+  
+  .td:nth-child(4) { flex-direction: row; align-items: center; gap: 0.5rem; }
+  .td:nth-child(4)::before { content: 'Payment Status'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0; }
+  
+  .td:nth-child(5) { flex-direction: row; align-items: center; gap: 0.5rem; }
+  .td:nth-child(5)::before { content: 'Check-in'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0; }
+  
+  .td:nth-child(6)::before { content: 'Actions'; font-size: 0.75rem; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.5rem; }
 }
