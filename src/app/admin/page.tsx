@@ -12,6 +12,9 @@ interface Ticket {
   name: string;
   email: string;
   phone: string;
+  student_id: string;
+  course_name: string;
+  admin: string;
   payment_status: string;
   is_checked_in: boolean;
 }
@@ -425,10 +428,13 @@ export default function AdminDashboard() {
                   </td>
                   <td className={styles.td}>
                     <div style={{fontWeight: 600}}>{ticket.name}</div>
+                    <div style={{fontSize: '0.8rem', color: '#9ca3af'}}>ID: {ticket.student_id || 'N/A'}</div>
+                    <div style={{fontSize: '0.8rem', color: '#9ca3af'}}>Course: {ticket.course_name || 'N/A'}</div>
                   </td>
                   <td className={styles.td}>
                     <div>{ticket.email}</div>
                     <div style={{fontSize: '0.8rem', color: '#9ca3af'}}>{ticket.phone}</div>
+                    <div style={{fontSize: '0.8rem', color: '#9ca3af', marginTop: '0.2rem'}}>Admin: <span style={{color: 'white'}}>{ticket.admin || 'N/A'}</span></div>
                   </td>
                   <td className={styles.td}>
                     <CustomSelect 
