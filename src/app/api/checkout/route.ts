@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         currency_code: 'AED',
         success_url: `${baseUrl}/success?ticket_id=${ticketId}`,
         cancel_url: `${baseUrl}/`,
-        test: true
+        test: false
       })
     });
 
