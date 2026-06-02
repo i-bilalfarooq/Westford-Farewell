@@ -57,7 +57,7 @@ export async function POST(request: Request) {
         'Authorization': `Bearer ${ziinaApiKey}`
       },
       body: JSON.stringify({
-        amount: 3695, // 36.95 AED in base units
+        amount: 3750, // 37.50 AED in base units
         currency_code: 'AED',
         success_url: `${baseUrl}/success?ticket_id=${ticketId}`,
         cancel_url: `${baseUrl}/`,

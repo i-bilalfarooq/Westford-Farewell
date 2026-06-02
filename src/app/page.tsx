@@ -131,8 +131,8 @@ export default function Home() {
           </div>
 
           <div className={styles.summary}>
-            <span className={styles.summaryLabel}>Total to pay (35 AED + VAT)</span>
-            <span className={styles.summaryValue}>AED 36.95</span>
+            <span className={styles.summaryLabel}>Total to pay (VAT &amp; Charges)</span>
+            <span className={styles.summaryValue}>AED 37.50</span>
           </div>
 
           <button 
