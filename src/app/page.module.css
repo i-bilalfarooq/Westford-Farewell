@@ -108,3 +108,56 @@
     gap: 0.5rem;
   }
 }
+
+.eventDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.eventRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.eventIcon {
+  color: #a5b4fc;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.eventText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.eventLabel {
+  font-weight: 600;
+  color: white;
+  font-size: 1rem;
+}
+
+.eventSubtext {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.mapContainer {
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+}
+
+.mapContainer iframe {
+  display: block;
+  width: 100%;
+  border: none;
+}
