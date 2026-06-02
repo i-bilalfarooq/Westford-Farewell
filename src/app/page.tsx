@@ -57,7 +57,7 @@ export default function Home() {
 
         <div className={styles.contentWrapper}>
           <div className={styles.column}>
-            <form className={styles.form} onSubmit={handleSubmit}>
+            <form id="checkoutForm" className={styles.form} onSubmit={handleSubmit}>
               {error && <div className={styles.error}>{error}</div>}
 
           <div className={styles.formGroup}>
@@ -132,24 +132,6 @@ export default function Home() {
             />
           </div>
 
-          <div className={styles.summary}>
-            <span className={styles.summaryLabel}>Total to pay (VAT &amp; Charges)</span>
-            <span className={styles.summaryValue}>AED 37.50</span>
-          </div>
-
-          <button 
-            type="submit" 
-            className="primary-btn" 
-            disabled={loading}
-          >
-            {loading ? 'Processing...' : 'Continue to Payment'}
-            {!loading && (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            )}
-          </button>
             </form>
           </div>
 
@@ -193,6 +175,27 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            <div className={styles.summary} style={{ marginTop: '1.5rem' }}>
+              <span className={styles.summaryLabel}>Total to pay (VAT &amp; Charges)</span>
+              <span className={styles.summaryValue}>AED 37.50</span>
+            </div>
+
+            <button 
+              type="submit" 
+              form="checkoutForm"
+              className="primary-btn" 
+              style={{ marginTop: '1rem' }}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Continue to Payment'}
+              {!loading && (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </div>
