@@ -202,6 +202,45 @@ export default function AdminDashboard() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [qrCodeDataUrls, setQrCodeDataUrls] = useState<Record<string, string>>({});
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  
+  const [ticketLimit, setTicketLimit] = useState<number>(200);
+  const [isSavingLimit, setIsSavingLimit] = useState(false);
+
+  const fetchSettings = async (pwd: string) => {
+    try {
+      const res = await fetch('/api/admin/settings', {
+        headers: { 'Authorization': `Bearer ${pwd}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTicketLimit(data.limit || 200);
+      }
+    } catch (e) {
+      console.error('Failed to fetch settings', e);
+    }
+  };
+
+  const handleSaveLimit = async () => {
+    if (!confirm(`Are you sure you want to set the ticket limit to ${ticketLimit}?`)) return;
+    setIsSavingLimit(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${password}` },
+        body: JSON.stringify({ limit: ticketLimit })
+      });
+      if (!res.ok) {
+        alert('Failed to save limit');
+      } else {
+        alert('Ticket limit updated successfully!');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error saving limit');
+    } finally {
+      setIsSavingLimit(false);
+    }
+  };
 
   const fetchTickets = async (pwd: string) => {
     try {
@@ -215,6 +254,7 @@ export default function AdminDashboard() {
       setTickets(data.tickets);
       setIsAuthenticated(true);
       sessionStorage.setItem('adminPassword', pwd);
+      fetchSettings(pwd);
     } catch (err: any) {
       setError(err.message || 'Failed to load tickets');
       setIsAuthenticated(false);
@@ -335,6 +375,22 @@ export default function AdminDashboard() {
       <div className={styles.header}>
         <h1 className={styles.title}>Ticketing Dashboard</h1>
         <div className={styles.headerActions}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1f2937', padding: '0.5rem', borderRadius: '0.5rem' }}>
+            <label style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Ticket Limit:</label>
+            <input 
+              type="number" 
+              value={ticketLimit} 
+              onChange={(e) => setTicketLimit(parseInt(e.target.value) || 0)}
+              style={{ width: '80px', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', border: '1px solid #374151', background: '#111827', color: 'white' }}
+            />
+            <button 
+              onClick={handleSaveLimit}
+              disabled={isSavingLimit}
+              style={{ padding: '0.25rem 0.75rem', background: '#4f46e5', color: 'white', borderRadius: '0.25rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem' }}
+            >
+              {isSavingLimit ? 'Saving...' : 'Save'}
+            </button>
+          </div>
           <button className="primary-btn" onClick={() => setIsScannerOpen(true)}>
             Open QR Scanner
           </button>

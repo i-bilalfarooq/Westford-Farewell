@@ -10,6 +10,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
+    // Check ticket limit
+    const { data: settingData } = await supabaseAdmin
+      .from('settings')
+      .select('value')
+      .eq('key', 'ticket_limit')
+      .single();
+
+    // Ignore PGRST116 (not found) and default to 200
+    const limit = settingData?.value ? parseInt(settingData.value) : 200;
+
+    const { count, error: countError } = await supabaseAdmin
+      .from('tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('payment_status', 'completed');
+
+    if (countError) {
+      console.error('Failed to count tickets:', countError);
+      return NextResponse.json({ error: 'Failed to verify ticket availability' }, { status: 500 });
+    }
+
+    if (count !== null && count >= limit) {
+      return NextResponse.json({ error: 'Tickets are sold out' }, { status: 400 });
+    }
+
     // Prepare Ziina Payment Intent Request
     const ziinaApiKey = process.env.ZIINA_API_KEY;
     if (!ziinaApiKey) {
