@@ -42,8 +42,7 @@ export default async function SuccessPage({
 
               // SEND EMAIL LOCALLY (since webhook won't fire on localhost)
               try {
-                const { Resend } = await import('resend');
-                const resend = new Resend(process.env.RESEND_API_KEY);
+                const nodemailer = (await import('nodemailer')).default;
                 
                 // Get Base URL
                 const host = (await searchParams).host || 'westford-farewell.vercel.app'; // Fallback if headers not easily accessible in page component
@@ -51,8 +50,16 @@ export default async function SuccessPage({
                 const baseUrl = `${protocol}://${host}`;
                 const qrCodeImageUrl = `${baseUrl}/api/qr?ticket_id=${ticket.id}`;
 
-                await resend.emails.send({
-                  from: 'onboarding@resend.dev',
+                const transporter = nodemailer.createTransport({
+                  service: 'gmail',
+                  auth: {
+                    user: process.env.GMAIL_USER,
+                    pass: process.env.GMAIL_APP_PASSWORD,
+                  },
+                });
+
+                await transporter.sendMail({
+                  from: '"Farewell Team" <' + process.env.GMAIL_USER + '>',
                   to: ticket.email,
                   subject: 'Your Ticket - University Farewell',
                   html: `
@@ -68,7 +75,7 @@ export default async function SuccessPage({
                     </div>
                   `
                 });
-                console.log("Local sync: Email sent to", ticket.email);
+                console.log("Local sync: Email sent to", ticket.email, "via Nodemailer");
               } catch (emailErr) {
                 console.error("Local sync: Failed to send email", emailErr);
               }

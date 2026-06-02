@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase';
-import { Resend } from 'resend';
-import QRCode from 'qrcode';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import nodemailer from 'nodemailer';
 
 export async function POST(request: Request) {
   try {
@@ -57,28 +54,39 @@ export async function POST(request: Request) {
         const ticketId = ticketData.id;
         const qrCodeImageUrl = `${baseUrl}/api/qr?ticket_id=${ticketId}`;
 
-        // 3. Send Email via Resend
-        await resend.emails.send({
-          from: 'onboarding@resend.dev', // TODO: Change this to your verified domain e.g., 'Tickets <tickets@yourdomain.com>'
-          to: ticketData.email,
-          subject: 'Your Ticket - University Farewell',
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
-              <h1 style="color: #4f46e5;">University Farewell</h1>
-              <p style="font-size: 16px;">Hi ${ticketData.name},</p>
-              <p style="font-size: 16px;">Your payment was successful! Here is your ticket.</p>
-              <p style="font-size: 14px; color: #666;">Please present this QR code at the entrance.</p>
-              
-              <div style="margin: 30px 0; padding: 20px; border: 2px dashed #ccc; border-radius: 10px; display: inline-block;">
-                <img src="${qrCodeImageUrl}" alt="Ticket QR Code" style="width: 250px; height: 250px;" />
-              </div>
-              
-              <p style="font-size: 12px; color: #999;">Ticket ID: ${ticketId}</p>
-            </div>
-          `
+        // 3. Send Email via Nodemailer
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
+          },
         });
-        
-        console.log(`Ticket ${ticketId} processed and emailed successfully.`);
+
+        try {
+          await transporter.sendMail({
+            from: '"Farewell Team" <' + process.env.GMAIL_USER + '>', 
+            to: ticketData.email,
+            subject: 'Your Ticket - University Farewell',
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
+                <h1 style="color: #4f46e5;">University Farewell</h1>
+                <p style="font-size: 16px;">Hi ${ticketData.name},</p>
+                <p style="font-size: 16px;">Your payment was successful! Here is your ticket.</p>
+                <p style="font-size: 14px; color: #666;">Please present this QR code at the entrance.</p>
+                
+                <div style="margin: 30px 0; padding: 20px; border: 2px dashed #ccc; border-radius: 10px; display: inline-block;">
+                  <img src="${qrCodeImageUrl}" alt="Ticket QR Code" style="width: 250px; height: 250px;" />
+                </div>
+                
+                <p style="font-size: 12px; color: #999;">Ticket ID: ${ticketId}</p>
+              </div>
+            `
+          });
+          console.log(`Ticket ${ticketId} processed and emailed successfully via standard Gmail.`);
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+        }
       }
     }
 
