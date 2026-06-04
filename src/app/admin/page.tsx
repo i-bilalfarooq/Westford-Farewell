@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import QRCode from 'qrcode';
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -209,6 +209,86 @@ export default function AdminDashboard() {
   const [ticketLimit, setTicketLimit] = useState<number>(200);
   const [isSavingLimit, setIsSavingLimit] = useState(false);
 
+  // Filtering and Sorting States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPayment, setFilterPayment] = useState('all');
+  const [filterCheckin, setFilterCheckin] = useState('all');
+  const [sortBy, setSortBy] = useState('date_desc');
+
+  const processedTickets = useMemo(() => {
+    let result = [...tickets];
+
+    // 1. Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t => 
+        t.name.toLowerCase().includes(q) || 
+        t.email.toLowerCase().includes(q) || 
+        (t.student_id && t.student_id.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. Filter Payment
+    if (filterPayment !== 'all') {
+      result = result.filter(t => t.payment_status === filterPayment);
+    }
+
+    // 3. Filter Checkin
+    if (filterCheckin !== 'all') {
+      const isScanned = filterCheckin === 'scanned';
+      result = result.filter(t => t.is_checked_in === isScanned);
+    }
+
+    // 4. Sort
+    result.sort((a, b) => {
+      if (sortBy === 'date_desc') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      } else if (sortBy === 'date_asc') {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } else if (sortBy === 'name_asc') {
+        return a.name.localeCompare(b.name);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [tickets, searchQuery, filterPayment, filterCheckin, sortBy]);
+
+  const exportToCSV = () => {
+    if (processedTickets.length === 0) {
+      alert('No tickets to export.');
+      return;
+    }
+
+    const headers = ['Date', 'Name', 'Email', 'Phone', 'Student ID', 'Course', 'Admin', 'Payment Status', 'Check-in Status'];
+    const csvRows = [headers.join(',')];
+
+    processedTickets.forEach(ticket => {
+      const row = [
+        new Date(ticket.created_at).toLocaleDateString(),
+        `"${ticket.name.replace(/"/g, '""')}"`,
+        `"${ticket.email}"`,
+        `"${ticket.phone}"`,
+        `"${ticket.student_id || ''}"`,
+        `"${ticket.course_name || ''}"`,
+        `"${ticket.admin || ''}"`,
+        ticket.payment_status.toUpperCase(),
+        ticket.is_checked_in ? 'SCANNED' : 'NOT SCANNED'
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `tickets_export_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const fetchSettings = async (pwd: string) => {
     try {
       const res = await fetch('/api/admin/settings', {
@@ -403,6 +483,53 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      <div className={styles.controlsContainer}>
+        <input 
+          type="text" 
+          placeholder="Search by name, email, or ID..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={styles.searchInput}
+        />
+        
+        <select 
+          value={filterPayment} 
+          onChange={(e) => setFilterPayment(e.target.value)}
+          className={styles.filterSelect}
+        >
+          <option value="all">All Payments</option>
+          <option value="completed">Paid Only</option>
+          <option value="pending">Pending Only</option>
+        </select>
+
+        <select 
+          value={filterCheckin} 
+          onChange={(e) => setFilterCheckin(e.target.value)}
+          className={styles.filterSelect}
+        >
+          <option value="all">All Check-ins</option>
+          <option value="scanned">Checked In</option>
+          <option value="not_scanned">Not Checked In</option>
+        </select>
+
+        <select 
+          value={sortBy} 
+          onChange={(e) => setSortBy(e.target.value)}
+          className={styles.filterSelect}
+        >
+          <option value="date_desc">Newest First</option>
+          <option value="date_asc">Oldest First</option>
+          <option value="name_asc">Name (A-Z)</option>
+        </select>
+
+        <button 
+          onClick={exportToCSV}
+          style={{ padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, marginLeft: 'auto' }}
+        >
+          Export CSV
+        </button>
+      </div>
+
       <div className={styles.tableContainer}>
         <table className={styles.table}>
           <thead>
@@ -416,12 +543,12 @@ export default function AdminDashboard() {
             </tr>
           </thead>
           <tbody>
-            {tickets.length === 0 ? (
+            {processedTickets.length === 0 ? (
               <tr>
                 <td colSpan={6} className={styles.emptyState}>No tickets found.</td>
               </tr>
             ) : (
-              tickets.map((ticket) => (
+              processedTickets.map((ticket) => (
                 <tr key={ticket.id} className={styles.tr}>
                   <td className={styles.td}>
                     {new Date(ticket.created_at).toLocaleDateString()}

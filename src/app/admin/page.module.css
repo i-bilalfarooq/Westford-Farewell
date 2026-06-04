@@ -39,6 +39,43 @@
   color: white;
 }
 
+.controlsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  background: #111827;
+  border: 1px solid #374151;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.filterSelect {
+  background: #111827;
+  border: 1px solid #374151;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  min-width: 140px;
+  cursor: pointer;
+}
+
 .tableContainer {
   width: 100%;
   border-radius: 12px;
