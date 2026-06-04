@@ -209,6 +209,11 @@ export default function AdminDashboard() {
   const [ticketLimit, setTicketLimit] = useState<number>(200);
   const [isSavingLimit, setIsSavingLimit] = useState(false);
 
+  // Duplicates Modal State
+  const [duplicatesToReview, setDuplicatesToReview] = useState<Ticket[]>([]);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [isDeletingDuplicates, setIsDeletingDuplicates] = useState(false);
+
   // Filtering and Sorting States
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPayment, setFilterPayment] = useState('all');
@@ -253,6 +258,9 @@ export default function AdminDashboard() {
 
     return result;
   }, [tickets, searchQuery, filterPayment, filterCheckin, sortBy]);
+
+  const totalPaid = tickets.filter(t => t.payment_status === 'completed').length;
+  const totalPending = tickets.filter(t => t.payment_status === 'pending').length;
 
   const exportToCSV = () => {
     if (processedTickets.length === 0) {
@@ -421,6 +429,55 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleFindDuplicates = () => {
+    // 1. Get all completed tickets
+    const completedTickets = tickets.filter(t => t.payment_status === 'completed');
+    
+    // 2. Find pending tickets that share an email OR student_id with a completed ticket
+    const duplicates = tickets.filter(t => {
+      if (t.payment_status !== 'pending') return false;
+      return completedTickets.some(c => 
+        (c.email.toLowerCase() === t.email.toLowerCase()) || 
+        (c.student_id && t.student_id && c.student_id.toLowerCase() === t.student_id.toLowerCase())
+      );
+    });
+
+    if (duplicates.length === 0) {
+      alert('No duplicate pending tickets found.');
+      return;
+    }
+
+    setDuplicatesToReview(duplicates);
+    setIsDuplicateModalOpen(true);
+  };
+
+  const confirmDeleteDuplicates = async () => {
+    setIsDeletingDuplicates(true);
+    
+    // Update UI optimistically
+    const duplicateIds = new Set(duplicatesToReview.map(d => d.id));
+    setTickets(prev => prev.filter(t => !duplicateIds.has(t.id)));
+
+    // Delete from backend
+    let deletedCount = 0;
+    for (const dup of duplicatesToReview) {
+      try {
+        await fetch(`/api/admin/tickets/${dup.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${password}` }
+        });
+        deletedCount++;
+      } catch (err) {
+        console.error('Failed to delete duplicate ticket', dup.id, err);
+      }
+    }
+
+    setIsDeletingDuplicates(false);
+    setIsDuplicateModalOpen(false);
+    setDuplicatesToReview([]);
+    alert(`Successfully deleted ${deletedCount} duplicate pending tickets.`);
+  };
+
   const openLargeQr = async (ticket: Ticket) => {
     try {
       const url = await QRCode.toDataURL(ticket.id, {
@@ -483,6 +540,17 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      <div className={styles.statsContainer}>
+        <div className={`${styles.statCard} ${styles.statPaid}`}>
+          <div className={styles.statValue}>{totalPaid}</div>
+          <div className={styles.statLabel}>Total Paid</div>
+        </div>
+        <div className={`${styles.statCard} ${styles.statPending}`}>
+          <div className={styles.statValue}>{totalPending}</div>
+          <div className={styles.statLabel}>Total Pending</div>
+        </div>
+      </div>
+
       <div className={styles.controlsContainer}>
         <input 
           type="text" 
@@ -522,12 +590,21 @@ export default function AdminDashboard() {
           <option value="name_asc">Name (A-Z)</option>
         </select>
 
-        <button 
-          onClick={exportToCSV}
-          style={{ padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, marginLeft: 'auto' }}
-        >
-          Export CSV
-        </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.75rem' }}>
+          <button 
+            onClick={handleFindDuplicates}
+            style={{ padding: '0.5rem 1rem', background: '#ef4444', color: 'white', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
+          >
+            Clean Up Duplicates
+          </button>
+          
+          <button 
+            onClick={exportToCSV}
+            style={{ padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className={styles.tableContainer}>
@@ -604,6 +681,44 @@ export default function AdminDashboard() {
 
       {isScannerOpen && (
         <ScannerModal onClose={() => setIsScannerOpen(false)} password={password} />
+      )}
+
+      {isDuplicateModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => !isDeletingDuplicates && setIsDuplicateModalOpen(false)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
+            <button className={styles.closeBtn} onClick={() => !isDeletingDuplicates && setIsDuplicateModalOpen(false)} disabled={isDeletingDuplicates}>&times;</button>
+            <h3 style={{color: 'white', marginBottom: '1rem'}}>Review Duplicate Pendings</h3>
+            <p style={{color: '#9ca3af', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
+              Found {duplicatesToReview.length} pending tickets where the user has already successfully paid under the same Email or Student ID.
+            </p>
+            
+            <div style={{ maxHeight: '300px', overflowY: 'auto', textAlign: 'left', marginBottom: '1.5rem', background: '#1a1a1a', padding: '1rem', borderRadius: '8px', border: '1px solid #333' }}>
+              {duplicatesToReview.map(dup => (
+                <div key={dup.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #333', color: 'white', fontSize: '0.875rem' }}>
+                  <strong>{dup.name}</strong> - {dup.email} <br/>
+                  <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>ID: {dup.student_id || 'N/A'} | Ticket: {dup.id.substring(0, 8)}...</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setIsDuplicateModalOpen(false)}
+                style={{ padding: '0.5rem 1.5rem', background: 'transparent', border: '1px solid #333', color: 'white', borderRadius: '6px', cursor: 'pointer' }}
+                disabled={isDeletingDuplicates}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeleteDuplicates}
+                style={{ padding: '0.5rem 1.5rem', background: '#ef4444', border: 'none', color: 'white', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                disabled={isDeletingDuplicates}
+              >
+                {isDeletingDuplicates ? 'Deleting...' : `Delete ${duplicatesToReview.length} Duplicates`}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedTicket && (
